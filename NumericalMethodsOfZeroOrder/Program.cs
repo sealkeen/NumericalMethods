@@ -8,7 +8,7 @@ namespace NumericalMethodsOfZeroOrder
 {
     partial class Program
     {
-        static Side LastSide;
+        static Side LastSide = Side.None;
         static double A = -2, B = 3;
 
         static void Main(string[] args)
@@ -27,32 +27,46 @@ namespace NumericalMethodsOfZeroOrder
 
         static double PerformDichotomy(double start, double end)
         {
-            Turns++;                        
+            Turns++;
             double lineLength = 0,          //Длина Отрезка
             centre = (start + end) / 2,     //Центральная точка
             x1 = (start + centre) / 2,      //Центр левой половины
             x2 = (centre + end) / 2,        //Центр правой половины
             fx1 = TargetFunction(x1),       //Результат вычислений f(x1)
             fx2 = TargetFunction(x2),       //Результат вычислений f(x2) 
-             fc = TargetFunction(centre);   //Результат вычислений f(c)
+            fc = 0;                         //Результат вычислений f(centre)
+
+            switch (LastSide) {
+                case Side.Centre:
+                    fc = FcBuff; break;     //Значение центра берём из буфера
+                case Side.Left:
+                    fc = Fx1Buff; break;
+                case Side.Right:
+                    fc = Fx2Buff; break;
+                case Side.None:
+                    fc = TargetFunction(centre);
+                    break;
+            }
+
             if (fc > fx1)
             {
-                lineLength = Math.Abs(centre - start);
-                end = centre; LastSide = Side.Left; //Экстремум функции находится слева от центра, указываем на это
+                lineLength = Math.Abs(centre - start); Fx1Buff = fx1;
+                end = centre; LastSide = Side.Left;                 //Экстремум функции находится слева от центра, указываем на это
             }
             else
             {
                 if (fc > fx2)
                 {
-                    lineLength = Math.Abs(centre - end);
-                    start = centre; LastSide = Side.Right; //Экстремум функции находится справа от центра, указываем на это
+                    lineLength = Math.Abs(centre - end); Fx2Buff = fx2;
+                    start = centre; LastSide = Side.Right;          //Экстремум функции находится справа от центра, указываем на это
                 }
                 else
                 {
-                    lineLength = Math.Abs(x2 - x1);
-                    start = x1; end = x2;
+                    lineLength = Math.Abs(x2 - x1); FcBuff = fc;
+                    start = x1; end = x2; LastSide = Side.Centre;   //Экстремум функции находится в центре, указываем на это
                 }
             }
+
             if (lineLength >= Accuracy)
                 return PerformDichotomy(start, end);
             else
@@ -65,7 +79,7 @@ namespace NumericalMethodsOfZeroOrder
         }
         static double TargetFunction(double x)
         {
-            return (A * Sqr(x)) + (B * x);
+            return (A * x * x) + (B * x);
         }
     }
 }
